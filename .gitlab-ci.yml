@@ -1,0 +1,15 @@
+image: openjdk:latest
+
+stages:
+  - build
+  - test
+
+build:
+  stage: build
+  script:
+    - ./gradlew assemble
+
+execute:
+  stage: test
+  script:
+    - ./gradlew test
