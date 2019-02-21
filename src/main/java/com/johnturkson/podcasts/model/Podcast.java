@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -23,6 +24,9 @@ public class Podcast {
     private URL website;
     private URL artwork;
     private List<Episode> episodes;
+    
+    private boolean subscribed;
+    private boolean favorite;
     
     private Podcast(String metadata) throws ParsingException {
         Matcher feedMatcher = Pattern
@@ -108,6 +112,24 @@ public class Podcast {
             throw new UncheckedIOException(x);
         }
         
+        Matcher subscribedMatcher = Pattern
+                .compile("<subscribed>(?<subscribed>.+?)</subscribed>")
+                .matcher(metadata);
+        if (subscribedMatcher.find()) {
+            subscribed = Boolean.parseBoolean(subscribedMatcher.group("subscribed").trim());
+        } else {
+            subscribed = false;
+        }
+        
+        Matcher favoriteMatcher = Pattern
+                .compile("<favorite>(?<favorite>.+?)</favorite>")
+                .matcher(metadata);
+        if (favoriteMatcher.find()) {
+            favorite = Boolean.parseBoolean(favoriteMatcher.group("favorite").trim());
+        } else {
+            favorite = false;
+        }
+        
         episodes = new ArrayList<>();
         Matcher episodeMatcher = Pattern.compile("(?s)(?:<item>|<episode>)(?<episode>.+?)" +
                 "(?:</item>|</episode>)")
@@ -167,7 +189,39 @@ public class Podcast {
         return episodes;
     }
     
-    public void export() throws IOException {
+    public boolean isSubscribed() {
+        return subscribed;
+    }
+    
+    public boolean isFavorite() {
+        return favorite;
+    }
+    
+    public void subscribe() {
+        subscribed = true;
+        Library.getInstance().getSubscribedPodcasts().add(this);
+        export();
+    }
+    
+    public void unsubscribe() {
+        subscribed = false;
+        Library.getInstance().getSubscribedPodcasts().remove(this);
+        export();
+    }
+    
+    public void favorite() {
+        favorite = true;
+        Library.getInstance().getFavoritePodcasts().add(this);
+        export();
+    }
+    
+    public void unfavorite() {
+        favorite = false;
+        Library.getInstance().getFavoritePodcasts().remove(this);
+        export();
+    }
+    
+    public void export() {
         String[] disallowedCharacters = {"<", ">", ":", "\"", "/", "\\", "|", "?", "*", "."};
         String validTitle = title;
         for (String s : disallowedCharacters) {
@@ -175,8 +229,12 @@ public class Podcast {
         }
         
         if (Files.notExists(Library.DEFAULT_LOCATION.resolve(validTitle).resolve("metadata.xml"))) {
-            Files.createDirectories(Library.DEFAULT_LOCATION.resolve(validTitle));
-            Files.createFile(Library.DEFAULT_LOCATION.resolve(validTitle).resolve("metadata.xml"));
+            try {
+                Files.createDirectories(Library.DEFAULT_LOCATION.resolve(validTitle));
+                Files.createFile(Library.DEFAULT_LOCATION.resolve(validTitle).resolve("metadata.xml"));
+            } catch (IOException x) {
+                throw new UncheckedIOException(x);
+            }
         }
         
         StringBuilder formatted = new StringBuilder();
@@ -189,18 +247,45 @@ public class Podcast {
         formatted.append("\t<copyright>").append(copyright).append("</copyright>\n");
         formatted.append("\t<website>").append(website).append("</website>\n");
         formatted.append("\t<artwork>").append(artwork).append("</artwork>\n");
+        formatted.append("\t<subscribed>").append(subscribed).append("</subscribed>\n");
+        formatted.append("\t<favorite>").append(favorite).append("</favorite>\n");
         
         for (Episode episode : episodes) {
             formatted.append("\t<episode>\n");
             formatted.append("\t\t<title>").append(episode.getTitle()).append("</title>\n");
             formatted.append("\t\t<description>").append(episode.getDescription()).append("</description>\n");
             formatted.append("\t\t<source>").append(episode.getSource()).append("</source>\n");
+            formatted.append("\t\t<downloaded>").append(episode.isDownloaded()).append("</downloaded>\n");
+            formatted.append("\t\t<played>").append(episode.isPlayed()).append("</played>\n");
+            formatted.append("\t\t<favorite>").append(episode.isFavorite()).append("</favorite>\n");
             formatted.append("\t</episode>\n");
         }
         
         formatted.append("</podcast>\n");
         
-        Files.writeString(Library.DEFAULT_LOCATION.resolve(validTitle).resolve("metadata.xml"),
-                formatted.toString());
+        try {
+            Files.writeString(Library.DEFAULT_LOCATION.resolve(validTitle).resolve("metadata.xml"),
+                    formatted.toString());
+        } catch (IOException x) {
+            throw new UncheckedIOException(x);
+        }
+    }
+    
+    @Override
+    public String toString() {
+        return title + "\n" + description + "\n" + author + "\n" + copyright;
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Podcast podcast = (Podcast) o;
+        return title.equals(podcast.title);
+    }
+    
+    @Override
+    public int hashCode() {
+        return Objects.hash(title);
     }
 }
