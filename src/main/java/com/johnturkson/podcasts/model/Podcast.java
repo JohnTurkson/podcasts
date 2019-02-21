@@ -1,12 +1,14 @@
 package com.johnturkson.podcasts.model;
 
-import com.johnturkson.podcasts.search.URLReader;
+import com.johnturkson.podcasts.io.FileReader;
+import com.johnturkson.podcasts.io.URLReader;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -22,20 +24,17 @@ public class Podcast {
     private URL artwork;
     private List<Episode> episodes;
     
-    private Podcast(URL feed) throws ParsingException {
-        this.feed = feed;
+    private Podcast(String metadata) throws ParsingException {
+        Matcher feedMatcher = Pattern
+                .compile("<feed>(?<feed>.+?)</feed>")
+                .matcher(metadata);
         
-        String contents = new URLReader(feed).read();
-        
-        Matcher metadataMatcher = Pattern
-                .compile("(?s)<channel>(?<metadata>.+?)<item>")
-                .matcher(contents);
-        
-        String metadata;
-        if (metadataMatcher.find()) {
-            metadata = metadataMatcher.group("metadata").trim();
-        } else {
-            throw new ParsingException("Unable to parse podcast metadata.");
+        if (feedMatcher.find()) {
+            try {
+                feed = new URL(feedMatcher.group("feed"));
+            } catch (MalformedURLException x) {
+                throw new UncheckedIOException(x);
+            }
         }
         
         Matcher titleMatcher = Pattern
@@ -59,7 +58,8 @@ public class Podcast {
         }
         
         Matcher authorMatcher = Pattern
-                .compile("(?s)<itunes:author>(?<author>.+?)</itunes:author>")
+                .compile("(?s)(?:<itunes:author>|<author>)(?<author>.+?)" +
+                        "(?:</itunes:author>|</author>)")
                 .matcher(metadata);
         
         if (authorMatcher.find()) {
@@ -79,7 +79,7 @@ public class Podcast {
         }
         
         Matcher websiteMatcher = Pattern
-                .compile("(?s)<link>(?<website>.+?)</link>")
+                .compile("(?s)(?:<link>|<website>)(?<website>.+?)(?:</link>|</website>)")
                 .matcher(metadata);
         
         try {
@@ -93,7 +93,8 @@ public class Podcast {
         }
         
         Matcher artworkMatcher = Pattern
-                .compile("(?s)<itunes:image href=\"(?<artwork>[^\"]+)\"\\s*/>")
+                .compile("(?s)(?:<itunes:image href=\"|<artwork>)(?<artwork>.+?)" +
+                        "(?:\"\\s*/>|</artwork>)")
                 .matcher(metadata);
         
         try {
@@ -108,16 +109,30 @@ public class Podcast {
         }
         
         episodes = new ArrayList<>();
-        Matcher episodeMatcher = Pattern.compile("(?s)<item>(?<episode>.+?)</item>")
-                .matcher(contents);
+        Matcher episodeMatcher = Pattern.compile("(?s)(?:<item>|<episode>)(?<episode>.+?)" +
+                "(?:</item>|</episode>)")
+                .matcher(metadata);
         
         while (episodeMatcher.find()) {
             episodes.add(Episode.parse(this, episodeMatcher.group("episode").trim()));
         }
     }
     
+    private Podcast(URL feed) throws ParsingException {
+        this(new URLReader(feed).read());
+        this.feed = feed;
+    }
+    
+    private Podcast(Path saved) throws ParsingException {
+        this(new FileReader(saved).read());
+    }
+    
     public static Podcast parse(URL feed) throws ParsingException {
         return new Podcast(feed);
+    }
+    
+    public static Podcast parse(Path saved) throws ParsingException {
+        return new Podcast(saved);
     }
     
     public URL getFeed() {
@@ -153,10 +168,6 @@ public class Podcast {
     }
     
     public void export() throws IOException {
-        // location (folder, file)
-        // format (xml)
-        // save (Files package)
-        
         String[] disallowedCharacters = {"<", ">", ":", "\"", "/", "\\", "|", "?", "*", "."};
         String validTitle = title;
         for (String s : disallowedCharacters) {

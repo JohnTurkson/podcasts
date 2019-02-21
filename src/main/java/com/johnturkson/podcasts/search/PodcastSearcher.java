@@ -1,6 +1,6 @@
 package com.johnturkson.podcasts.search;
 
-
+import com.johnturkson.podcasts.io.URLReader;
 import com.johnturkson.podcasts.model.ParsingException;
 import com.johnturkson.podcasts.model.Podcast;
 

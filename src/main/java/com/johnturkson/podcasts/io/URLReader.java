@@ -1,4 +1,4 @@
-package com.johnturkson.podcasts.search;
+package com.johnturkson.podcasts.io;
 
 import java.io.BufferedReader;
 import java.io.IOException;

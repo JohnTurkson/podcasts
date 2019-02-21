@@ -36,7 +36,8 @@ public class Episode {
             throw new ParsingException("Unable to parse episode description.");
         }
         
-        Matcher sourceMatcher = Pattern.compile("(?s)<enclosure url=\"(?<source>[^\"]+)\"")
+        Matcher sourceMatcher = Pattern.compile("(?s)(?:<enclosure url=\"|<source>)" +
+                "(?<source>.+?)(?:\"|</source>)")
                 .matcher(metadata);
         
         try {
