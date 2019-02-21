@@ -12,10 +12,12 @@ public class Episode {
     private String title;
     private String description;
     private URL source;
-    
+    private int length;
+    private boolean explicit;
     private boolean downloaded;
-    private boolean played;
     private boolean favorite;
+    private Status status;
+    private int progress;
     
     private Episode(Podcast podcast, String metadata) throws ParsingException {
         this.podcast = podcast;
@@ -55,32 +57,76 @@ public class Episode {
             throw new UncheckedIOException(x);
         }
         
+        Matcher lengthMatcher = Pattern.compile("(?:<length>|<itunes:duration>)" +
+                "(?:(?<seconds>\\d+)|(?<combined>(?:\\d+:)*\\d+))" +
+                "(?:</length>|</itunes:duration>)").matcher(metadata);
+        
+        if (lengthMatcher.find()) {
+            if (lengthMatcher.group("seconds") != null) {
+                length = Integer.parseInt(lengthMatcher.group("seconds"));
+            } else {
+                String[] fields = lengthMatcher.group("combined").split(":");
+                length = 0;
+                for (int i = 0; i < fields.length; i++) {
+                    int seconds = Integer.parseInt(fields[i]);
+                    for (int j = 0; j < fields.length - i - 1; j++) {
+                        seconds *= 60;
+                    }
+                    length += seconds;
+                }
+            }
+        } else {
+            throw new ParsingException("Unable to determine episode length.");
+        }
+        
+        Matcher explicitMatcher = Pattern.compile("(?s)<(?:itunes:)?explicit>" +
+                "(?<explicit>yes|no|true|false)" +
+                "</(?:itunes:)?explicit>").matcher(metadata);
+        
+        if (explicitMatcher.find()) {
+            explicit = explicitMatcher.group("explicit").equals("yes") ||
+                    explicitMatcher.group("explicit").equals("true");
+        } else {
+            explicit = true;
+        }
+        
         Matcher downloadedMatcher = Pattern
-                .compile("<downloaded>(?<downloaded>.+?)</downloaded>")
+                .compile("(?s)<downloaded>(?<downloaded>yes|no|true|false)</downloaded>")
                 .matcher(metadata);
         if (downloadedMatcher.find()) {
-            downloaded = Boolean.parseBoolean(downloadedMatcher.group("downloaded").trim());
+            downloaded = downloadedMatcher.group("downloaded").equals("yes") ||
+                    downloadedMatcher.group("downloaded").equals("true");
         } else {
             downloaded = false;
         }
         
-        Matcher playedMatcher = Pattern
-                .compile("<played>(?<played>.+?)</played>")
-                .matcher(metadata);
-        if (playedMatcher.find()) {
-            played = Boolean.parseBoolean(playedMatcher.group("played").trim());
-        } else {
-            played = false;
-        }
-        
         Matcher favoriteMatcher = Pattern
-                .compile("<favorite>(?<favorite>.+?)</favorite>")
+                .compile("(?s)<favorite>(?<favorite>yes|no|true|false)</favorite>")
                 .matcher(metadata);
         if (favoriteMatcher.find()) {
-            favorite = Boolean.parseBoolean(favoriteMatcher.group("favorite").trim());
+            favorite = favoriteMatcher.group("favorite").equals("yes") ||
+                    favoriteMatcher.group("favorite").equals("true");
         } else {
             favorite = false;
         }
+        
+        Matcher statusMatcher = Pattern.compile("(?s)<status>" +
+                "(?<status>UNPLAYED|UNFINISHED|COMPLETED)</status>").matcher(metadata);
+        
+        if (statusMatcher.find()) {
+            status = Status.valueOf(statusMatcher.group("status"));
+        } else {
+            status = Status.UNPLAYED;
+        }
+        
+        Matcher progressMatcher = Pattern.compile("(?s)<progress>(?<progress>\\d+)</progress>")
+                .matcher(metadata);
+        if (progressMatcher.find()) {
+            progress = Integer.parseInt(progressMatcher.group("progress"));
+        } else {
+            progress = 0;
+        }
+        
     }
     
     public static Episode parse(Podcast podcast, String metadata) throws ParsingException {
@@ -113,6 +159,10 @@ public class Episode {
         podcast.export();
     }
     
+    public Podcast getPodcast() {
+        return podcast;
+    }
+    
     public String getTitle() {
         return title;
     }
@@ -121,24 +171,32 @@ public class Episode {
         return description;
     }
     
-    public Podcast getPodcast() {
-        return podcast;
-    }
-    
     public URL getSource() {
         return source;
+    }
+    
+    public int getLength() {
+        return length;
+    }
+    
+    public boolean isExplicit() {
+        return explicit;
     }
     
     public boolean isDownloaded() {
         return downloaded;
     }
     
-    public boolean isPlayed() {
-        return played;
-    }
-    
     public boolean isFavorite() {
         return favorite;
+    }
+    
+    public Status getStatus() {
+        return status;
+    }
+    
+    public int getProgress() {
+        return progress;
     }
     
     @Override
@@ -153,5 +211,11 @@ public class Episode {
     @Override
     public int hashCode() {
         return Objects.hash(podcast, title);
+    }
+    
+    public enum Status {
+        UNPLAYED,
+        UNFINISHED,
+        COMPLETED
     }
 }

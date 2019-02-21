@@ -16,17 +16,18 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Podcast {
-    private URL feed;
     private String title;
+    private URL feed;
     private String description;
     private String author;
     private String copyright;
     private URL website;
     private URL artwork;
-    private List<Episode> episodes;
     
     private boolean subscribed;
     private boolean favorite;
+    
+    private List<Episode> episodes;
     
     private Podcast(String metadata) throws ParsingException {
         Matcher feedMatcher = Pattern
@@ -62,8 +63,8 @@ public class Podcast {
         }
         
         Matcher authorMatcher = Pattern
-                .compile("(?s)(?:<itunes:author>|<author>)(?<author>.+?)" +
-                        "(?:</itunes:author>|</author>)")
+                .compile("(?s)(?:<(?:itunes:)?author>)(?<author>.+?)" +
+                        "(?:</(?:itunes:)?author>)")
                 .matcher(metadata);
         
         if (authorMatcher.find()) {
@@ -83,7 +84,7 @@ public class Podcast {
         }
         
         Matcher websiteMatcher = Pattern
-                .compile("(?s)(?:<link>|<website>)(?<website>.+?)(?:</link>|</website>)")
+                .compile("(?s)(?:<website>|<link>)(?<website>.+?)(?:</website>|</link>)")
                 .matcher(metadata);
         
         try {
@@ -97,8 +98,8 @@ public class Podcast {
         }
         
         Matcher artworkMatcher = Pattern
-                .compile("(?s)(?:<itunes:image href=\"|<artwork>)(?<artwork>.+?)" +
-                        "(?:\"\\s*/>|</artwork>)")
+                .compile("(?s)(?:<artwork>|<itunes:image href=\")(?<artwork>.+?)" +
+                        "(?:</artwork>|\"\\s*/>)")
                 .matcher(metadata);
         
         try {
@@ -136,7 +137,11 @@ public class Podcast {
                 .matcher(metadata);
         
         while (episodeMatcher.find()) {
-            episodes.add(Episode.parse(this, episodeMatcher.group("episode").trim()));
+            try {
+                episodes.add(Episode.parse(this, episodeMatcher.group("episode").trim()));
+            } catch (ParsingException x) {
+                // ignored - episode cannot be parsed
+            }
         }
     }
     
@@ -157,12 +162,12 @@ public class Podcast {
         return new Podcast(saved);
     }
     
-    public URL getFeed() {
-        return feed;
-    }
-    
     public String getTitle() {
         return title;
+    }
+    
+    public URL getFeed() {
+        return feed;
     }
     
     public String getDescription() {
@@ -185,16 +190,16 @@ public class Podcast {
         return artwork;
     }
     
-    public List<Episode> getEpisodes() {
-        return episodes;
-    }
-    
     public boolean isSubscribed() {
         return subscribed;
     }
     
     public boolean isFavorite() {
         return favorite;
+    }
+    
+    public List<Episode> getEpisodes() {
+        return episodes;
     }
     
     public void subscribe() {
@@ -255,9 +260,12 @@ public class Podcast {
             formatted.append("\t\t<title>").append(episode.getTitle()).append("</title>\n");
             formatted.append("\t\t<description>").append(episode.getDescription()).append("</description>\n");
             formatted.append("\t\t<source>").append(episode.getSource()).append("</source>\n");
+            formatted.append("\t\t<length>").append(episode.getLength()).append("</length>\n");
+            formatted.append("\t\t<explicit>").append(episode.isExplicit()).append("</explicit>\n");
             formatted.append("\t\t<downloaded>").append(episode.isDownloaded()).append("</downloaded>\n");
-            formatted.append("\t\t<played>").append(episode.isPlayed()).append("</played>\n");
             formatted.append("\t\t<favorite>").append(episode.isFavorite()).append("</favorite>\n");
+            formatted.append("\t\t<status>").append(episode.getStatus()).append("</status>\n");
+            formatted.append("\t\t<progress>").append(episode.getProgress()).append("</progress>\n");
             formatted.append("\t</episode>\n");
         }
         
