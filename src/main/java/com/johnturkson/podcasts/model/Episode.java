@@ -1,8 +1,11 @@
 package com.johnturkson.podcasts.model;
 
+import com.johnturkson.podcasts.tools.Downloader;
+
 import java.io.UncheckedIOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -136,6 +139,7 @@ public class Episode {
     public void download() {
         // TODO download
         downloaded = true;
+        Downloader.download(source, getEpisodeLocation());
         Library.getInstance().getDownloadedEpisodes().add(this);
         podcast.export();
     }
@@ -157,6 +161,24 @@ public class Episode {
         favorite = false;
         Library.getInstance().getFavoriteEpisodes().remove(this);
         podcast.export();
+    }
+    
+    private Path getEpisodeLocation() {
+        // TODO better solution (extract into method?)
+        Path location = Library.DEFAULT_LOCATION;
+        String[] disallowedCharacters = {"<", ">", ":", "\"", "/", "\\", "|", "?", "*", "."};
+        String subDir = podcast.getTitle();
+        for (String s : disallowedCharacters) {
+            subDir = subDir.replaceAll(Pattern.quote(s), "");
+        }
+        location = location.resolve(subDir);
+        subDir = title;
+        for (String s : disallowedCharacters) {
+            subDir = subDir.replaceAll(Pattern.quote(s), "");
+        }
+        location = location.resolve(subDir + ".mp3");
+    
+        return location;
     }
     
     public Podcast getPodcast() {

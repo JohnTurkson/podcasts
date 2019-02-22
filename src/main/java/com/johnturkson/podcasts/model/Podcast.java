@@ -1,7 +1,7 @@
 package com.johnturkson.podcasts.model;
 
-import com.johnturkson.podcasts.io.FileReader;
-import com.johnturkson.podcasts.io.URLReader;
+import com.johnturkson.podcasts.tools.FileReader;
+import com.johnturkson.podcasts.tools.URLReader;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
