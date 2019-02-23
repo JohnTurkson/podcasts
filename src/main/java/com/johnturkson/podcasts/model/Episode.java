@@ -1,6 +1,7 @@
 package com.johnturkson.podcasts.model;
 
-import com.johnturkson.podcasts.tools.Downloader;
+import com.johnturkson.podcasts.tools.EpisodeDeleter;
+import com.johnturkson.podcasts.tools.EpisodeDownloader;
 
 import java.io.UncheckedIOException;
 import java.net.MalformedURLException;
@@ -26,7 +27,7 @@ public class Episode {
         this.podcast = podcast;
         
         Matcher titleMatcher = Pattern
-                .compile("(?s)<title>(?<title>.+?)</title>")
+                .compile("(?s)<title>(?<title>.*?)</title>")
                 .matcher(metadata);
         
         if (titleMatcher.find()) {
@@ -37,7 +38,7 @@ public class Episode {
         
         Matcher descriptionMatcher = Pattern
                 .compile("(?s)<description>\\s*(?:<!\\[CDATA\\[)?" +
-                        "(?<description>.+?)\\s*(?:]]>)?\\s*</description>")
+                        "(?<description>.*?)\\s*(?:]]>)?\\s*</description>")
                 .matcher(metadata);
         
         if (descriptionMatcher.find()) {
@@ -47,7 +48,7 @@ public class Episode {
         }
         
         Matcher sourceMatcher = Pattern.compile("(?s)(?:<enclosure url=\"|<source>)" +
-                "(?<source>.+?)(?:\"|</source>)")
+                "(?<source>.*?)(?:\"|</source>)")
                 .matcher(metadata);
         
         try {
@@ -137,16 +138,15 @@ public class Episode {
     }
     
     public void download() {
-        // TODO download
         downloaded = true;
-        Downloader.download(source, getEpisodeLocation());
+        EpisodeDownloader.download(this);
         Library.getInstance().getDownloadedEpisodes().add(this);
         podcast.export();
     }
     
     public void delete() {
-        // TODO delete
         downloaded = false;
+        EpisodeDeleter.delete(this);
         Library.getInstance().getDownloadedEpisodes().remove(this);
         podcast.export();
     }
@@ -163,7 +163,7 @@ public class Episode {
         podcast.export();
     }
     
-    private Path getEpisodeLocation() {
+    public Path getEpisodeLocation() {
         // TODO better solution (extract into method?)
         Path location = Library.DEFAULT_LOCATION;
         String[] disallowedCharacters = {"<", ">", ":", "\"", "/", "\\", "|", "?", "*", "."};
@@ -219,6 +219,11 @@ public class Episode {
     
     public int getProgress() {
         return progress;
+    }
+    
+    @Override
+    public String toString() {
+        return title + "\n" + description;
     }
     
     @Override

@@ -5,7 +5,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class Library {
@@ -19,10 +19,10 @@ public class Library {
     private Set<Episode> favoriteEpisodes;
     
     private Library() {
-        this.subscribedPodcasts = new HashSet<>();
-        this.favoritePodcasts = new HashSet<>();
-        this.downloadedEpisodes = new HashSet<>();
-        this.favoriteEpisodes = new HashSet<>();
+        this.subscribedPodcasts = new LinkedHashSet<>();
+        this.favoritePodcasts = new LinkedHashSet<>();
+        this.downloadedEpisodes = new LinkedHashSet<>();
+        this.favoriteEpisodes = new LinkedHashSet<>();
     }
     
     public static Library getInstance() {
@@ -31,6 +31,10 @@ public class Library {
     
     public void restore() {
         try {
+            if (!Files.exists(DEFAULT_LOCATION)) {
+                Files.createDirectories(DEFAULT_LOCATION);
+            }
+            
             Files.list(DEFAULT_LOCATION)
                     .filter(d -> Files.isDirectory(d))
                     .filter(d -> Files.exists(d.resolve("metadata.xml")))

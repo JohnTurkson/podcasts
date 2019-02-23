@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane fx:id="mainWindow" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.johnturkson.podcasts.ui.UIController">
+   <left>
+      <VBox fx:id="navigationPane" alignment="TOP_CENTER" prefWidth="100.0" BorderPane.alignment="CENTER">
+         <children>
+            <Button fx:id="searchButton" mnemonicParsing="false" onAction="#displaySearch" text="Search" />
+            <Button fx:id="libraryButton" mnemonicParsing="false" onAction="#displayLibrary" text="Library" />
+         </children>
+      </VBox>
+   </left>
+   <bottom>
+      <VBox fx:id="playerPane" alignment="CENTER" BorderPane.alignment="CENTER">
+         <children>
+            <Label fx:id="podcastLabel" text="Podcast" visible="false" />
+            <Label fx:id="episodeLabel" text="Episode" visible="false" />
+            <HBox alignment="BOTTOM_CENTER" prefWidth="600.0">
+               <children>
+                  <Button fx:id="previousButton" disable="true" mnemonicParsing="false" text="&lt;" />
+                  <Button fx:id="playButton" alignment="TOP_LEFT" disable="true" mnemonicParsing="false" text="Play" />
+                  <Button fx:id="nextButton" disable="true" mnemonicParsing="false" text="&gt;" />
+               </children>
+            </HBox>
+            <Slider fx:id="timeSlider" blockIncrement="1.0" disable="true" maxWidth="-Infinity" minWidth="200.0" prefWidth="400.0" />
+         </children>
+      </VBox>
+   </bottom>
+   <right>
+      <VBox fx:id="queuePane" alignment="TOP_CENTER" prefWidth="100.0" BorderPane.alignment="CENTER">
+         <children>
+            <Label fx:id="queueLabel" text="Queue" />
+         </children>
+      </VBox>
+   </right>
+   <top>
+      <HBox fx:id="searchPane" alignment="CENTER" BorderPane.alignment="CENTER">
+         <children>
+            <TextField fx:id="searchBar" alignment="CENTER" onAction="#search" promptText="Search" />
+         </children>
+      </HBox>
+   </top>
+   <center>
+      <StackPane fx:id="centerPane" alignment="TOP_CENTER" BorderPane.alignment="TOP_CENTER">
+         <children>
+            <ScrollPane fx:id="libraryDisplayPane" fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="NEVER">
+               <content>
+                  <VBox fx:id="libraryDisplay" />
+               </content>
+            </ScrollPane>
+            <ScrollPane fx:id="episodeDisplayPane" fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="NEVER">
+               <content>
+                  <VBox fx:id="episodeDisplay" />
+               </content>
+            </ScrollPane>
+            <ScrollPane fx:id="podcastDisplayPane" fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="NEVER">
+               <content>
+                  <VBox fx:id="podcastDisplay" />
+               </content>
+            </ScrollPane>
+            <ScrollPane fx:id="searchDisplayPane" fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="NEVER" StackPane.alignment="TOP_CENTER">
+               <content>
+                  <VBox fx:id="searchDisplay" />
+               </content>
+            </ScrollPane>
+         </children>
+      </StackPane>
+   </center>
+</BorderPane>

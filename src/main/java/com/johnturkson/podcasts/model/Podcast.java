@@ -53,7 +53,8 @@ public class Podcast {
         }
         
         Matcher descriptionMatcher = Pattern
-                .compile("(?s)<description>\\s*(?:<!\\[CDATA\\[)?(?<description>.+?)\\s*(?:]]>)?\\s*</description>")
+                .compile("(?s)<description>\\s*(?:<!\\[CDATA\\[)?(?<description>.+?)\\s*(?:]]>)" +
+                        "?\\s*</description>")
                 .matcher(metadata);
         
         if (descriptionMatcher.find()) {
@@ -74,13 +75,13 @@ public class Podcast {
         }
         
         Matcher copyrightMatcher = Pattern
-                .compile("(?s)<copyright>(?<copyright>.+?)</copyright>")
+                .compile("(?s)(?:<copyright>(?<copyright>.+?)</copyright>)")
                 .matcher(metadata);
         
         if (copyrightMatcher.find()) {
             copyright = copyrightMatcher.group("copyright").trim();
         } else {
-            throw new ParsingException("Unable to parse podcast copyright.");
+            copyright = "";
         }
         
         Matcher websiteMatcher = Pattern
@@ -89,7 +90,8 @@ public class Podcast {
         
         try {
             if (websiteMatcher.find()) {
-                website = new URL(websiteMatcher.group("website").trim());
+                website = new URL(websiteMatcher.group("website").trim()
+                        .replaceAll("^www\\.", "https://www\\."));
             } else {
                 throw new ParsingException("Unable to parse podcast website.");
             }
@@ -99,7 +101,7 @@ public class Podcast {
         
         Matcher artworkMatcher = Pattern
                 .compile("(?s)(?:<artwork>|<itunes:image href=\")(?<artwork>.+?)" +
-                        "(?:</artwork>|\"\\s*/>)")
+                        "(?:</artwork>|\"\\s*>\\s*</itunes:image>|\"\\s*/>)")
                 .matcher(metadata);
         
         try {

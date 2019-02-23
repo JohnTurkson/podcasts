@@ -15,7 +15,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PodcastSearcher {
-    private static final int DEFAULT_LIMIT = 10;
+    private static final int DEFAULT_LIMIT = 5;
     
     private int limit;
     
