@@ -27,7 +27,7 @@ public class Episode {
         this.podcast = podcast;
         
         Matcher titleMatcher = Pattern
-                .compile("(?s)<title>(?<title>.*?)</title>")
+                .compile("(?s)<title>(?<title>.*.+?)</title>")
                 .matcher(metadata);
         
         if (titleMatcher.find()) {
@@ -38,7 +38,7 @@ public class Episode {
         
         Matcher descriptionMatcher = Pattern
                 .compile("(?s)<description>\\s*(?:<!\\[CDATA\\[)?" +
-                        "(?<description>.*?)\\s*(?:]]>)?\\s*</description>")
+                        "(?<description>.+?)\\s*(?:]]>)?\\s*</description>")
                 .matcher(metadata);
         
         if (descriptionMatcher.find()) {
@@ -48,7 +48,7 @@ public class Episode {
         }
         
         Matcher sourceMatcher = Pattern.compile("(?s)(?:<enclosure url=\"|<source>)" +
-                "(?<source>.*?)(?:\"|</source>)")
+                "(?<source>.+?)(?:\"|</source>)")
                 .matcher(metadata);
         
         try {
