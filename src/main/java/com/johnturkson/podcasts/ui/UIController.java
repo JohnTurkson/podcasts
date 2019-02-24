@@ -2,13 +2,11 @@ package com.johnturkson.podcasts.ui;
 
 import com.johnturkson.podcasts.model.Episode;
 import com.johnturkson.podcasts.model.Library;
+import com.johnturkson.podcasts.model.Player;
 import com.johnturkson.podcasts.model.Podcast;
 import com.johnturkson.podcasts.search.PodcastSearcher;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
@@ -35,9 +33,26 @@ public class UIController {
     @FXML
     private ScrollPane libraryDisplayPane;
     
+    @FXML
+    private VBox playerContainer;
+    @FXML
+    private Button playButton;
+    @FXML
+    private Button previousButton;
+    @FXML
+    private Button nextButton;
+    @FXML
+    private Label podcastLabel;
+    @FXML
+    private Label episodeLabel;
+    @FXML
+    private Slider timeSlider;
+    @FXML
+    private Label timeLabel;
+    
     public void search() {
         searchDisplay.getChildren().clear();
-    
+        
         searchDisplay.getChildren().add(new Label("Results"));
         
         for (Podcast result : new PodcastSearcher().search(searchBar.getText())) {
@@ -65,7 +80,7 @@ public class UIController {
         podcastDisplay.getChildren().add(title);
         podcastDisplay.getChildren().add(author);
         podcastDisplay.getChildren().add(description);
-    
+        
         Button subscribeButton = new Button(podcast.isSubscribed() ? "Unsubscribe" : "Subscribe");
         subscribeButton.setOnAction(actionEvent -> {
             if (podcast.isSubscribed()) {
@@ -118,6 +133,10 @@ public class UIController {
         });
         episodeDisplay.getChildren().add(downloadButton);
         
+        Button playButton = new Button("Play");
+        playButton.setOnAction(actionEvent -> playEpisode(episode));
+        episodeDisplay.getChildren().add(playButton);
+        
         centerPane.getChildren().forEach(child -> child.setVisible(false));
         episodeDisplayPane.setVisible(true);
         episodeDisplayPane.toFront();
@@ -140,12 +159,12 @@ public class UIController {
             libraryDisplay.getChildren().add(subscribed);
         }
         
-//        libraryDisplay.getChildren().add(new Label("Favorites"));
-//        for (Podcast podcast : Library.getInstance().getFavoritePodcasts()) {
-//            Button favorite = new Button(podcast.getTitle());
-//            favorite.setOnAction(actionEvent -> displayPodcast(podcast));
-//            libraryDisplay.getChildren().add(favorite);
-//        }
+        libraryDisplay.getChildren().add(new Label("Favorites"));
+        for (Podcast podcast : Library.getInstance().getFavoritePodcasts()) {
+            Button favorite = new Button(podcast.getTitle());
+            favorite.setOnAction(actionEvent -> displayPodcast(podcast));
+            libraryDisplay.getChildren().add(favorite);
+        }
         
         libraryDisplay.getChildren().add(new Label("Episodes"));
         libraryDisplay.getChildren().add(new Label("Downloaded"));
@@ -155,15 +174,56 @@ public class UIController {
             libraryDisplay.getChildren().add(downloaded);
         }
         
-//        libraryDisplay.getChildren().add(new Label("Favorites"));
-//        for (Episode episode : Library.getInstance().getFavoriteEpisodes()) {
-//            Button favorite = new Button(episode.getTitle());
-//            favorite.setOnAction(actionEvent -> displayEpisode(episode));
-//            libraryDisplay.getChildren().add(favorite);
-//        }
+        libraryDisplay.getChildren().add(new Label("Favorites"));
+        for (Episode episode : Library.getInstance().getFavoriteEpisodes()) {
+            Button favorite = new Button(episode.getTitle());
+            favorite.setOnAction(actionEvent -> displayEpisode(episode));
+            libraryDisplay.getChildren().add(favorite);
+        }
         
         centerPane.getChildren().forEach(child -> child.setVisible(false));
         libraryDisplayPane.setVisible(true);
         libraryDisplayPane.toFront();
+    }
+    
+    public void playEpisode(Episode episode) {
+        playButton.setDisable(false);
+        previousButton.setDisable(false);
+        nextButton.setDisable(false);
+        timeSlider.setDisable(false);
+        timeLabel.setDisable(false);
+        
+        Player.getInstance().play(episode);
+        podcastLabel.setText(episode.getPodcast().getTitle());
+        episodeLabel.setText(episode.getTitle());
+        
+        Player.getInstance().getMediaPlayer().setOnPlaying(() -> {
+            playButton.setText("Pause");
+            playButton.setOnAction(actionEvent -> Player.getInstance().pause());
+        });
+        
+        Player.getInstance().getMediaPlayer().setOnPaused(() -> {
+            playButton.setText("Play");
+            playButton.setOnAction(actionEvent -> Player.getInstance().play());
+        });
+        
+        Player.getInstance().getMediaPlayer().setOnStopped(() -> {
+            playButton.setText("Play");
+            playButton.setOnAction(actionEvent -> Player.getInstance().play());
+        });
+        
+        Player.getInstance().getMediaPlayer().currentTimeProperty().addListener(observable -> {
+            timeSlider.setValue(Player.getInstance().getTotalTime() == 0 ? 0 :
+                    (double) Player.getInstance().getCurrentTime() / (double) Player.getInstance().getTotalTime() * 100);
+            timeLabel.setText(Player.getInstance().getCurrentTime() + " / " + Player.getInstance().getTotalTime());
+        });
+        
+        timeSlider.valueProperty().addListener(observable -> {
+            if (timeSlider.isValueChanging()) {
+                timeLabel.setText((int) (Player.getInstance().getTotalTime() * timeSlider.getValue() / 100) +
+                        "/" + Player.getInstance().getTotalTime());
+                Player.getInstance().seek((int) (Player.getInstance().getTotalTime() * timeSlider.getValue() / 100));
+            }
+        });
     }
 }

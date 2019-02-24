@@ -115,7 +115,7 @@ public class Episode {
         }
         
         Matcher statusMatcher = Pattern.compile("(?s)<status>" +
-                "(?<status>UNPLAYED|UNFINISHED|COMPLETED)</status>").matcher(metadata);
+                "(?<status>UNPLAYED|PLAYING|PLAYED)</status>").matcher(metadata);
         
         if (statusMatcher.find()) {
             status = Status.valueOf(statusMatcher.group("status"));
@@ -161,6 +161,14 @@ public class Episode {
         favorite = false;
         Library.getInstance().getFavoriteEpisodes().remove(this);
         podcast.export();
+    }
+    
+    public void setStatus(Status status) {
+        this.status = status;
+    }
+    
+    public void setProgress(int progress) {
+        this.progress = progress;
     }
     
     public Path getEpisodeLocation() {
@@ -242,7 +250,7 @@ public class Episode {
     
     public enum Status {
         UNPLAYED,
-        UNFINISHED,
-        COMPLETED
+        PLAYING,
+        PLAYED
     }
 }

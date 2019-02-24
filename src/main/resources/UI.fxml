@@ -20,10 +20,10 @@
       </VBox>
    </left>
    <bottom>
-      <VBox fx:id="playerPane" alignment="CENTER" BorderPane.alignment="CENTER">
+      <VBox fx:id="playerContainer" alignment="CENTER" BorderPane.alignment="CENTER">
          <children>
-            <Label fx:id="podcastLabel" text="Podcast" visible="false" />
-            <Label fx:id="episodeLabel" text="Episode" visible="false" />
+            <Label fx:id="podcastLabel" />
+            <Label fx:id="episodeLabel" />
             <HBox alignment="BOTTOM_CENTER" prefWidth="600.0">
                <children>
                   <Button fx:id="previousButton" disable="true" mnemonicParsing="false" text="&lt;" />
@@ -31,7 +31,12 @@
                   <Button fx:id="nextButton" disable="true" mnemonicParsing="false" text="&gt;" />
                </children>
             </HBox>
-            <Slider fx:id="timeSlider" blockIncrement="1.0" disable="true" maxWidth="-Infinity" minWidth="200.0" prefWidth="400.0" />
+            <HBox alignment="TOP_CENTER">
+               <children>
+                  <Slider fx:id="timeSlider" blockIncrement="1.0" disable="true" maxWidth="-Infinity" minWidth="200.0" prefWidth="400.0" />
+                  <Label fx:id="timeLabel" />
+               </children>
+            </HBox>
          </children>
       </VBox>
    </bottom>

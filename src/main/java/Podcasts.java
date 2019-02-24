@@ -1,4 +1,5 @@
 import com.johnturkson.podcasts.model.Library;
+import com.johnturkson.podcasts.model.Player;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -19,8 +20,14 @@ public class Podcasts extends Application {
         primaryStage.show();
     }
     
+    @Override
+    public void stop() {
+        Player.getInstance().export();
+    }
+    
     public static void main(String[] args) {
         Library.getInstance().restore();
+        Player.getInstance().restore();
         launch(args);
     }
 }
